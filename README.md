@@ -7,7 +7,7 @@ Reusable Codex skill for validating and repairing Mermaid diagrams in markdown d
 Option 1: Install with skill-installer script
 
 ```bash
-scripts/install-skill-from-github.py --repo cloudaipro/mermaid-doc-guard-skill --path skills/mermaid-doc-guard
+python scripts/install-skill-from-github.py --repo cloudaipro/mermaid-doc-guard-skill --path skills/mermaid-doc-guard
 ```
 
 Option 2: Manual install
