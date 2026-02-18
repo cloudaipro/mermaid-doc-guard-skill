@@ -1,0 +1,3 @@
+interface:
+  display_name: "Mermaid Doc Guard"
+  short_description: "Validate and repair Mermaid diagrams in docs"
