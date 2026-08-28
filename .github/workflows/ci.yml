@@ -21,4 +21,12 @@ jobs:
       - name: Check validator CLI
         run: node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs --help
       - name: Run renderer integration check
-        run: node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs skills/mermaid-doc-guard/SKILL.md skills/mermaid-doc-guard/references/mermaid-safe-patterns.md
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/puppeteer-config.json" <<'JSON'
+          {"args":["--no-sandbox"]}
+          JSON
+          node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs \
+            --puppeteer-config "$RUNNER_TEMP/puppeteer-config.json" \
+            skills/mermaid-doc-guard/SKILL.md \
+            skills/mermaid-doc-guard/references/mermaid-safe-patterns.md
