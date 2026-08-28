@@ -54,6 +54,8 @@ Exit codes:
 
 The validator prefers a repository-local `node_modules/.bin/mmdc`. Otherwise it uses a pinned `@mermaid-js/mermaid-cli@11.16.0` fallback through `npx`. The default render timeout is 120 seconds so a first-time npx/Puppeteer setup has enough time to initialize; override it with `MERMAID_TIMEOUT_MS` or `--timeout-ms` when needed. Override the fallback renderer version with `MERMAID_CLI_VERSION` or `--mermaid-cli-version`.
 
+When a trusted CI/container environment requires custom Puppeteer launch options, pass an explicit config with `MERMAID_PUPPETEER_CONFIG` or `--puppeteer-config`. The validator never disables Chromium sandboxing automatically.
+
 ## Tests
 
 The parser, failure-classification, and CLI exit-code regression tests use Node's built-in test runner:
