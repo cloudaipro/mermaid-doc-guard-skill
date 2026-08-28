@@ -36,7 +36,7 @@ Restart Codex after a manual install if the skill is not picked up immediately.
 Validate one or more files/directories:
 
 ```bash
-node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs README.md docs
+node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs README.md skills/mermaid-doc-guard
 ```
 
 Validate the entire current repository:
@@ -52,11 +52,11 @@ Exit codes:
 - `2` — renderer/tooling/environment failure; do not repair diagram source based on this result.
 - `3` — invalid arguments or target path.
 
-The validator prefers a repository-local `node_modules/.bin/mmdc`. Otherwise it uses a pinned `@mermaid-js/mermaid-cli@11.16.0` fallback through `npx`. Override with `MERMAID_CLI_VERSION` when needed.
+The validator prefers a repository-local `node_modules/.bin/mmdc`. Otherwise it uses a pinned `@mermaid-js/mermaid-cli@11.16.0` fallback through `npx`. The default render timeout is 120 seconds so a first-time npx/Puppeteer setup has enough time to initialize; override it with `MERMAID_TIMEOUT_MS` or `--timeout-ms` when needed. Override the fallback renderer version with `MERMAID_CLI_VERSION` or `--mermaid-cli-version`.
 
 ## Tests
 
-The parser and failure-classification regression tests use Node's built-in test runner:
+The parser, failure-classification, and CLI exit-code regression tests use Node's built-in test runner:
 
 ```bash
 node --test skills/mermaid-doc-guard/scripts/validate-mermaid.test.mjs
