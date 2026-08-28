@@ -20,3 +20,5 @@ jobs:
         run: node --test skills/mermaid-doc-guard/scripts/validate-mermaid.test.mjs
       - name: Check validator CLI
         run: node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs --help
+      - name: Run renderer integration check
+        run: node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs skills/mermaid-doc-guard/SKILL.md skills/mermaid-doc-guard/references/mermaid-safe-patterns.md
