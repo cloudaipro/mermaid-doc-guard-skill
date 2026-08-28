@@ -1,3 +1,4 @@
 interface:
   display_name: "Mermaid Doc Guard"
-  short_description: "Validate and repair Mermaid diagrams in docs"
+  short_description: "Validate and safely repair Mermaid in Markdown"
+  default_prompt: "Use $mermaid-doc-guard to validate Mermaid diagrams in the Markdown files I changed and minimally repair only genuine diagram failures."

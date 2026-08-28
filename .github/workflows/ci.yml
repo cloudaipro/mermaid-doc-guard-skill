@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Run regression tests
+        run: node --test skills/mermaid-doc-guard/scripts/validate-mermaid.test.mjs
+      - name: Check validator CLI
+        run: node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs --help
+      - name: Run renderer integration check
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/puppeteer-config.json" <<'JSON'
+          {"args":["--no-sandbox"]}
+          JSON
+          node skills/mermaid-doc-guard/scripts/validate-mermaid.mjs \
+            --puppeteer-config "$RUNNER_TEMP/puppeteer-config.json" \
+            skills/mermaid-doc-guard/SKILL.md \
+            skills/mermaid-doc-guard/references/mermaid-safe-patterns.md
