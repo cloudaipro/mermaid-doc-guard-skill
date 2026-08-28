@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { rendererLooksUnavailable, scanMermaidBlocks } from './validate-mermaid.mjs';
+
+const SCRIPT_PATH = fileURLToPath(new URL('./validate-mermaid.mjs', import.meta.url));
 
 test('extracts a standard backtick Mermaid fence', () => {
   const result = scanMermaidBlocks('before\n```mermaid\nflowchart LR\n  A --> B\n```\nafter\n');
@@ -107,4 +114,38 @@ test('does not classify ordinary Mermaid parse errors as environment failures', 
     stderr: 'Error: Parse error on line 2: unexpected token',
     stdout: '',
   }), false);
+});
+
+test('CLI returns exit 3 for a missing target', () => {
+  const result = spawnSync(process.execPath, [SCRIPT_PATH, path.join(os.tmpdir(), 'definitely-missing-mermaid-doc.md')], {
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 3);
+  assert.match(result.stderr, /Target does not exist or cannot be read/);
+});
+
+test('CLI returns exit 0 when a selected Markdown file has no Mermaid blocks', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-doc-guard-test-'));
+  try {
+    const input = path.join(tempDir, 'plain.md');
+    fs.writeFileSync(input, '# Plain Markdown\nNo diagram here.\n');
+    const result = spawnSync(process.execPath, [SCRIPT_PATH, input], { encoding: 'utf8' });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /No Mermaid blocks found/);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('CLI returns exit 1 for an unclosed Mermaid fence without invoking the renderer', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-doc-guard-test-'));
+  try {
+    const input = path.join(tempDir, 'broken.md');
+    fs.writeFileSync(input, '```mermaid\nflowchart LR\nA --> B\n');
+    const result = spawnSync(process.execPath, [SCRIPT_PATH, input], { encoding: 'utf8' });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Markdown fence validation failed/);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });
