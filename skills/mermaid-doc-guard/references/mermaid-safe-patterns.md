@@ -68,6 +68,24 @@ MERMAID_CLI_VERSION=11.16.0 node validate-mermaid.mjs docs
 
 A successful render with one Mermaid version does not guarantee identical behavior in every hosting platform. When the target is GitHub, GitLab, a docs framework, or another embedded renderer, align validation with that platform's supported Mermaid version when known.
 
+### Puppeteer / Chromium environments
+
+Renderer launch failures are environment failures, not Mermaid syntax failures. The validator exits `2` when its known-good smoke diagram cannot launch.
+
+If a trusted CI/container environment needs explicit Puppeteer launch settings, provide a config rather than changing diagram source:
+
+```bash
+node validate-mermaid.mjs --puppeteer-config /path/to/puppeteer-config.json docs
+```
+
+or:
+
+```bash
+MERMAID_PUPPETEER_CONFIG=/path/to/puppeteer-config.json node validate-mermaid.mjs docs
+```
+
+For example, Mermaid CLI documents `{"args":["--no-sandbox"]}` as a workaround for Linux environments where Chromium cannot use its sandbox. Disabling the browser sandbox reduces isolation, so do this only when the execution environment is already appropriately isolated and trusted; the validator never enables `--no-sandbox` automatically.
+
 ## Validation commands
 
 Whole repository:
