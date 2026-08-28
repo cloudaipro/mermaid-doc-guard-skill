@@ -141,6 +141,7 @@ function parseArgs(argv) {
   const targets = [];
   let mermaidCliVersion = process.env.MERMAID_CLI_VERSION || DEFAULT_MERMAID_CLI_VERSION;
   let timeoutMs = Number(process.env.MERMAID_TIMEOUT_MS || DEFAULT_TIMEOUT_MS);
+  let puppeteerConfig = process.env.MERMAID_PUPPETEER_CONFIG || null;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -154,8 +155,12 @@ function parseArgs(argv) {
         throw new Error('--timeout-ms requires a positive number.');
       }
       timeoutMs = value;
+    } else if (arg === '--puppeteer-config') {
+      const value = argv[++i];
+      if (!value) throw new Error('--puppeteer-config requires a path.');
+      puppeteerConfig = value;
     } else if (arg === '--help' || arg === '-h') {
-      return { help: true, targets: [], mermaidCliVersion, timeoutMs };
+      return { help: true, targets: [], mermaidCliVersion, timeoutMs, puppeteerConfig };
     } else if (arg.startsWith('-')) {
       throw new Error(`Unknown option: ${arg}`);
     } else {
@@ -168,6 +173,7 @@ function parseArgs(argv) {
     targets: targets.length > 0 ? targets : [DEFAULT_TARGET],
     mermaidCliVersion,
     timeoutMs,
+    puppeteerConfig,
   };
 }
 
@@ -241,11 +247,16 @@ export function rendererLooksUnavailable(result) {
   return environmentMarkers.some((marker) => text.includes(marker));
 }
 
-async function smokeTestRenderer(renderer, tempDir, timeoutMs) {
+function buildRenderArgs(renderer, inputFile, outputFile, puppeteerConfig) {
+  const configArgs = puppeteerConfig ? ['-p', puppeteerConfig] : [];
+  return [...renderer.argsPrefix, ...configArgs, '-i', inputFile, '-o', outputFile];
+}
+
+async function smokeTestRenderer(renderer, tempDir, timeoutMs, puppeteerConfig) {
   const inputFile = path.join(tempDir, '__smoke__.mmd');
   const outputFile = path.join(tempDir, '__smoke__.svg');
   await fs.writeFile(inputFile, 'flowchart LR\n  a["A"] --> b["B"]\n', 'utf8');
-  return runProcess(renderer.command, [...renderer.argsPrefix, '-i', inputFile, '-o', outputFile], timeoutMs);
+  return runProcess(renderer.command, buildRenderArgs(renderer, inputFile, outputFile, puppeteerConfig), timeoutMs);
 }
 
 async function main(argv = process.argv.slice(2)) {
@@ -259,7 +270,7 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   if (options.help) {
-    console.log('Usage: validate-mermaid.mjs [--mermaid-cli-version VERSION] [--timeout-ms MS] [path ...]');
+    console.log('Usage: validate-mermaid.mjs [--mermaid-cli-version VERSION] [--timeout-ms MS] [--puppeteer-config FILE] [path ...]');
     console.log('If no path is supplied, the current repository is scanned.');
     return;
   }
@@ -271,6 +282,16 @@ async function main(argv = process.argv.slice(2)) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 3;
     return;
+  }
+
+  let puppeteerConfig = null;
+  if (options.puppeteerConfig) {
+    puppeteerConfig = path.resolve(ROOT, options.puppeteerConfig);
+    if (!existsSync(puppeteerConfig)) {
+      console.error(`Puppeteer config does not exist: ${options.puppeteerConfig}`);
+      process.exitCode = 3;
+      return;
+    }
   }
 
   const diagrams = [];
@@ -312,7 +333,7 @@ async function main(argv = process.argv.slice(2)) {
 
   try {
     console.log(`Mermaid renderer: ${renderer.label}`);
-    const smoke = await smokeTestRenderer(renderer, tempDir, options.timeoutMs);
+    const smoke = await smokeTestRenderer(renderer, tempDir, options.timeoutMs, puppeteerConfig);
     if (smoke.status !== 0) {
       console.error('Mermaid validator environment check failed. No diagrams were modified or judged invalid.');
       console.error(formatProcessFailure(smoke));
@@ -330,7 +351,7 @@ async function main(argv = process.argv.slice(2)) {
 
       const result = runProcess(
         renderer.command,
-        [...renderer.argsPrefix, '-i', inputFile, '-o', outputFile],
+        buildRenderArgs(renderer, inputFile, outputFile, puppeteerConfig),
         options.timeoutMs,
       );
 
