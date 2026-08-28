@@ -149,3 +149,18 @@ test('CLI returns exit 1 for an unclosed Mermaid fence without invoking the rend
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test('CLI returns exit 3 for a missing Puppeteer config', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mermaid-doc-guard-test-'));
+  try {
+    const input = path.join(tempDir, 'plain.md');
+    fs.writeFileSync(input, '# Plain Markdown\n');
+    const result = spawnSync(process.execPath, [SCRIPT_PATH, '--puppeteer-config', path.join(tempDir, 'missing.json'), input], {
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 3);
+    assert.match(result.stderr, /Puppeteer config does not exist/);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
