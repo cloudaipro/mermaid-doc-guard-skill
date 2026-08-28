@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = process.cwd();
 const DEFAULT_TARGET = '.';
 const DEFAULT_MERMAID_CLI_VERSION = '11.16.0';
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 120_000;
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown']);
 const IGNORE_DIRS = new Set(['.git', '.svn', '.hg', 'node_modules']);
 
